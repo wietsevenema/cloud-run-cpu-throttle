@@ -15,7 +15,6 @@ import (
 
 var log = logrus.New().WithField("revision", os.Getenv("K_REVISION"))
 
-
 /*
 
 When you deploy this on Cloud Run managed, you can observe CPU throttling
@@ -28,13 +27,13 @@ handles a request.
 $: docker run --cpus .3 gcr.io/[PROJECT-ID]/cpu-throttle
 time="2019-12-18T09:04:58Z" msg=Started CLOCKS_PER_SEC=1000000
 time="2019-12-18T09:05:08Z" msg="Tested CPU Throttle" cpu-time=0.29
- */
+*/
 
 func main() {
 	log.WithField("CLOCKS_PER_SEC", C.CLOCKS_PER_SEC).Println("Started")
 
 	port := os.Getenv("PORT")
-	if port == ""{
+	if port == "" {
 		port = "8080"
 	}
 
@@ -61,7 +60,9 @@ processor time. The value that clock() returns is the number of clock ticks.
 https://www.gnu.org/software/libc/manual/html_node/CPU-Time.html
 
 */
+
 func testCPUThrottle() float64 {
+	// Number of clock ticks since start
 	var startTicks = C.clock()
 	startTime := time.Now()
 	var stopTime time.Time
@@ -69,14 +70,15 @@ func testCPUThrottle() float64 {
 	for {
 		stopTime = time.Now()
 		if stopTime.Sub(startTime) >= wait {
-		break
+			break
 		}
 	}
 	stopTicks := C.clock()
 	runSeconds := stopTime.Sub(startTime).Seconds()
-	return float64(stopTicks-startTicks)/C.CLOCKS_PER_SEC/runSeconds
+	// Factor of CPU allocated
+	return float64(stopTicks-startTicks) /
+		C.CLOCKS_PER_SEC / runSeconds
 }
-
 
 /*
 
@@ -109,4 +111,3 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello World!")
 	requestLog.Println("Stop Serving Request Request")
 }
-
